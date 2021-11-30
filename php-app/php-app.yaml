@@ -1,0 +1,52 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: phpapp
+  labels:
+    app: php
+spec:
+  selector:
+    app: php
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+    nodePort: 38081
+    name: app
+  - protocol: TCP
+    port: 3500
+    targetPort: 3500
+    nodePort: 38082
+    name: dapr
+  type: NodePort
+  # type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: phpapp
+  labels:
+    app: php
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: php
+  template:
+    metadata:
+      labels:
+        app: php
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/log-level: "debug"
+        dapr.io/app-id: "phpapp"
+        dapr.io/app-port: "8080"
+        dapr.io/sidecar-image: "ccr.ccs.tencentyun.com/dapr/daprd:1.5.0"
+        dapr.io/sidecar-listen-addresses: "0.0.0.0"
+    spec:
+      containers:
+      - name: php
+        image: ccr.ccs.tencentyun.com/dapr/myphp:v0.1.0
+        ports:
+        - containerPort: 8000
+        imagePullPolicy: Always
