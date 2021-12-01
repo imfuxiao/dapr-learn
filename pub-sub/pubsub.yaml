@@ -1,0 +1,49 @@
+kind: Service
+apiVersion: v1
+metadata:
+  name: pubsub
+  labels:
+    app: pubsub
+spec:
+  selector:
+    app: pubsub
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+    name: app
+  - protocol: TCP
+    port: 3500
+    targetPort: 3500
+    name: dapr
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pubsub
+  labels:
+    app: pubsub
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pubsub
+  template:
+    metadata:
+      labels:
+        app: pubsub
+      annotations:
+        dapr.io/enabled: "true"
+        dapr.io/log-level: "debug"
+        dapr.io/app-id: "pubsub"
+        dapr.io/app-port: "8080"
+        dapr.io/sidecar-image: "ccr.ccs.tencentyun.com/dapr/daprd:1.5.0"
+        dapr.io/sidecar-listen-addresses: "0.0.0.0"
+    spec:
+      containers:
+      - name: pubsub
+        image: ccr.ccs.tencentyun.com/dapr/pubsubapp:v0.1.0
+        ports:
+        - containerPort: 8000
+        imagePullPolicy: Always
